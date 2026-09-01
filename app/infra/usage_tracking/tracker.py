@@ -105,7 +105,8 @@ usage_tracker_db_pool = None
 usage_tracker: UsageTracker | None = None
 
 if settings.USAGE_TRACKER_DB_URL:
-    usage_tracker_db_pool = get_usage_tracker_db_pool()
+    # usage_tracker_db_pool = get_usage_tracker_db_pool()
+    usage_tracker_db_pool = None
 
 async def get_usage_tracker():
     global usage_tracker
