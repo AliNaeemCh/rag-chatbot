@@ -20,7 +20,7 @@ class LLMRequest(BaseModel):
     temperature: Optional[float] = Field(default=1)
 
 
-@router.post("/llm", dependencies=[Depends(verify_credentials)])
+@router.post("/llm")
 async def call_llm(
     request: LLMRequest,
     req: Request,

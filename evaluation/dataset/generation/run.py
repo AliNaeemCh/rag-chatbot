@@ -8,7 +8,7 @@ from evaluation.dataset.generation.config import EvalDatasetGeneratorConfig, Eva
 from app.prompts.eval_dataset_generator import FACTUAL_QS_GENERATOR_SYSTEM_PROMPT, INFERENCE_QS_GENERATOR_SYSTEM_PROMPT, QA_SCHEMA
 from app.infra.usage_tracking.tracker import get_usage_tracker
 from app.infra.dependencies import create_openai_client
-from app.infra.llm_engines.openai.engine import OpenAIEngine
+from app.infra.llm_engines.openai.engine import OpenAIEngine, OpenAIAPI
 from ingestion.chunks_generation.config import ChunkingConfig
 
 import logging
@@ -215,9 +215,9 @@ async def main():
     chunks_path = settings.PROCESSED_DATA_DIR / "sys_annual_2025_chunks.jsonl"
     dataset_path = settings.EVAL_DATASET_DIR / "eval_dataset.jsonl"
     config = EvalDatasetGeneratorConfig(resume=False)
-    openai_client = create_openai_client(api_key=settings.OPENAI_API_KEY)
+    openai_client = create_openai_client(api_key=settings.GEMINI_API_KEY, base_url=settings.GEMINI_OPENAI_BASE_URL)
     usage_tracker = await get_usage_tracker()
-    eval_dataset_generator_llm = OpenAIEngine(model_name=settings.EVAL_DATASET_GENERATOR_LLM, client = openai_client, usage_tracker=usage_tracker)
+    eval_dataset_generator_llm = OpenAIEngine(model_name=settings.EVAL_DATASET_GENERATOR_LLM, client = openai_client, api=OpenAIAPI.CHAT_COMPLETIONS)
     eval_dataset_generator = EvalDatasetGenerator(chunks_index=chunks_index, chunks_path=chunks_path, llm=eval_dataset_generator_llm, min_chunk_tokens=ChunkingConfig().chunk_size // 2, seed=config.seed)
 
     await run_pipeline(

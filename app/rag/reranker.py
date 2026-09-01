@@ -37,7 +37,7 @@ class Reranker:
             "top_k": self.top_k,
         }
 
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=300) as client:
             response = await client.post(
                 self.api_url,
                 json=payload,

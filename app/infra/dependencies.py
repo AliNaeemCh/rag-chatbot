@@ -38,7 +38,7 @@ async def build_rag_pipeline():
     from app.rag.chat_history import chat_history
     from app.prompts.rag import GENERATOR_SYSTEM_PROMPT, REWRITER_SYSTEM_PROMPT, REWRITER_SCHEMA
     from app.infra.embeddings.hugging_face import HuggingFaceEmbeddingProvider
-    from app.infra.llm_engines.openai.engine import OpenAIEngine
+    from app.infra.llm_engines.openai.engine import OpenAIEngine, OpenAIAPI
     from app.rag.pipeline import RAGPipeline
     from app.rag.message_rewriter import MessageRewriter
     from app.rag.retriever import Retriever
@@ -48,9 +48,9 @@ async def build_rag_pipeline():
     from app.infra.db.pool import get_rag_db_pool
 
     usage_tracker = await get_usage_tracker()
-    openai_client = create_openai_client(api_key=settings.OPENAI_API_KEY)
-    llm_generator = OpenAIEngine(model_name=settings.GENERATOR_MODEL, client=openai_client, usage_tracker=usage_tracker, check_usage=False)
-    llm_rewriter = OpenAIEngine(model_name=settings.REWRITER_MODEL, client=openai_client, usage_tracker=usage_tracker, check_usage=False)
+    openai_client = create_openai_client(api_key=settings.GEMINI_API_KEY, base_url=settings.GEMINI_OPENAI_BASE_URL)
+    llm_generator = OpenAIEngine(model_name=settings.GENERATOR_MODEL, client=openai_client, api=OpenAIAPI.CHAT_COMPLETIONS)
+    llm_rewriter = OpenAIEngine(model_name=settings.REWRITER_MODEL, client=openai_client, api=OpenAIAPI.CHAT_COMPLETIONS)
     rag_db_pool = get_rag_db_pool()
     await rag_db_pool.open()
     pg_store = PgStore(db_pool=rag_db_pool, embedding_dim=settings.EMBEDDING_DIMENSIONS, m=settings.HNSW_M, ef_construction=settings.HNSW_EF_CONSTRUCTION)

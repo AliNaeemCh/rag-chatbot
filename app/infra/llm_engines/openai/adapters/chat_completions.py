@@ -33,19 +33,35 @@ class OpenAIChatCompletionsAdapter(OpenAIBaseAdapter):
     
 
     @openai_retry(logger)
-    def stream(self, model_name: str, client: AsyncOpenAI, request: dict):
-        payload = self._build_payload(model_name=model_name, request=request)
+    async def stream(
+        self,
+        model_name: str,
+        client: AsyncOpenAI,
+        request: dict,
+    ):
+        payload = self._build_payload(
+            model_name=model_name,
+            request=request,
+        )
         payload["stream"] = True
 
-        response = client.chat.completions.create(**payload)
+        response = await client.chat.completions.create(**payload)
 
-        def gen():
-            for chunk in response:
+        state = {"final_response": None}
+
+        async def gen():
+            chunks = []
+
+            async for chunk in response:
                 delta = chunk.choices[0].delta.content
+
                 if delta:
+                    chunks.append(delta)
                     yield delta
 
-        return gen()
+            state["final_response"] = "".join(chunks)
+
+        return gen(), state
     
     @openai_retry(logger)
     def create(self, model_name: str, client: AsyncOpenAI, request: dict):

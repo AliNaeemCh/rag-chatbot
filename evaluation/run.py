@@ -11,7 +11,7 @@ from app.rag.config import ResponseMode
 from evaluation.retrieval_eval import RetrievalEvaluator
 from evaluation.generation_eval import GenerationEvaluator
 from evaluation.dataset.generation.config import EvalQuestionType
-from app.infra.llm_engines.openai.engine import OpenAIEngine
+from app.infra.llm_engines.openai.engine import OpenAIEngine, OpenAIAPI
 from app.prompts.retrieval_evaluator import ANSWERABLE_QS_SYSTEM_PROMPT, ANSWERABLE_QS_SCHEMA
 from app.prompts.generation_evaluator import REFERENCE_COVERAGE_EVAL_SYSTEM_PROMPT, REFERENCE_COVERAGE_EVAL_SCHEMA, \
                                             FAITHFULNESS_EVAL_SYSTEM_PROMPT, FAITHFULNESS_EVAL_SCHEMA
@@ -316,9 +316,9 @@ async def main():
 
     config = EvalConfig(resume=False)
     rag_pipeline, _ = await build_rag_pipeline()
-    openai_client = create_openai_client(api_key=settings.OPENAI_API_KEY)
+    openai_client = create_openai_client(api_key=settings.GEMINI_API_KEY, base_url=settings.GEMINI_OPENAI_BASE_URL)
     usage_tracker = await get_usage_tracker()
-    llm_judge = OpenAIEngine(model_name=settings.LLM_JUDGE_MODEL, client=openai_client, usage_tracker=usage_tracker)
+    llm_judge = OpenAIEngine(model_name=settings.LLM_JUDGE_MODEL, client=openai_client, api=OpenAIAPI.CHAT_COMPLETIONS)
 
     retrieval_eval = RetrievalEvaluator(llm_judge=llm_judge, system_prompt=ANSWERABLE_QS_SYSTEM_PROMPT, llm_output_schema=ANSWERABLE_QS_SCHEMA)
     generation_eval = GenerationEvaluator(llm_judge=llm_judge)
