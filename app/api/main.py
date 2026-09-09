@@ -54,5 +54,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
 app.include_router(inference_router, prefix="/api/v1")
 app.include_router(llm_router, prefix="/api/v1")
