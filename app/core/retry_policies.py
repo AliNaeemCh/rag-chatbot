@@ -8,8 +8,9 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential_jitter,
     retry_if_exception_type,
-    before_sleep_log,
+    before_sleep_log
 )
+from tenacity.wait import wait_base
 from openai import RateLimitError, APIError, APITimeoutError
 from huggingface_hub.errors import HfHubHTTPError
 import requests
@@ -26,7 +27,30 @@ class RetryConfig:
     max_wait: float = 20
     jitter: float = 0.5
 
+default_retry_config = RetryConfig()
+
 # ----------------------------------------
+
+class wait_retry_after_or_exponential_jitter(wait_base):
+    def __init__(self, config: RetryConfig):
+        self.exponential = wait_exponential_jitter(
+            initial=config.initial_wait,
+            max=config.max_wait,
+            jitter=config.jitter,
+        )
+
+    def __call__(self, retry_state):
+        exc = retry_state.outcome.exception()
+
+        response = getattr(exc, "response", None)
+        headers = getattr(response, "headers", {})
+
+        retry_after = headers.get("Retry-After")
+
+        if retry_after is not None:
+            return float(retry_after)
+
+        return self.exponential(retry_state)
 
 def build_retry(
     logger: logging.Logger,
@@ -34,15 +58,11 @@ def build_retry(
     config:  RetryConfig | None = None
 ):
     if config is None:
-        config = RetryConfig()
+        config = default_retry_config
         
     return retry(
         stop=stop_after_attempt(config.max_attempts),
-        wait=wait_exponential_jitter(
-            initial=config.initial_wait,
-            max=config.max_wait,
-            jitter=config.jitter,
-        ),
+        wait=wait_retry_after_or_exponential_jitter(config),
         retry=retry_if_exception_type(retry_exceptions),
         reraise=True,
         before_sleep=before_sleep_log(logger, logging.WARNING),
